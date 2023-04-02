@@ -38,10 +38,10 @@ __code uint8_t _OLED_FONT_CHINESE_32x32[] = {
 
 OLED_font OLED_FONT_CHINESE_32x32 = {
     (uint8_t *)_OLED_FONT_CHINESE_32x32,
-    32,  // width
-    32,  // height
-    0,   // spacing
-    1,   // First char
+    32,  // Font width in pixels
+    4,   // Font height in OLED pages (8 pixels per page)
+    0,   // Character spacing
+    1,   // The code point of the first character
 };
 
 #endif  // __OLED_FONT_CHINESE_32x32__

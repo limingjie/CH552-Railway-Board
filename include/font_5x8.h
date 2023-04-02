@@ -103,8 +103,8 @@ __code uint8_t _OLED_FONT_5x8[] = {
 
 OLED_font OLED_FONT_5x8 = {
     (uint8_t *)_OLED_FONT_5x8,
-    5,  // width
-    8,  // height
-    1,  // spacing
-    32,
+    5,   // Font width in pixels
+    1,   // Font height in OLED pages (8 pixels per page)
+    1,   // Character spacing
+    32,  // The code point of the first character
 };

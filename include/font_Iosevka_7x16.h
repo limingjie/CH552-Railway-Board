@@ -103,8 +103,8 @@ __code uint8_t _OLED_FONT_IOSEVKA_7x16[] = {
 
 OLED_font OLED_FONT_IOSEVKA_7x16 = {
     (uint8_t *)_OLED_FONT_IOSEVKA_7x16,
-    7,   // width
-    16,  // height
-    0,   // spacing
-    32,  // First char
+    7,   // Font width in pixels
+    2,   // Font height in OLED pages (8 pixels per page)
+    0,   // Character spacing
+    32,  // The code point of the first character
 };

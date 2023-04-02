@@ -18,10 +18,10 @@ __code uint8_t _OLED_FONT_CHINESE_16x16[] = {
 
 OLED_font OLED_FONT_CHINESE_16x16 = {
     (uint8_t *)_OLED_FONT_CHINESE_16x16,
-    16,  // width
-    16,  // height
-    0,   // spacing
-    1,   // First char
+    16,  // Font width in pixels
+    2,   // Font height in OLED pages (8 pixels per page)
+    0,   // Character spacing
+    1,   // The code point of the first character
 };
 
 #endif  // __OLED_FONT_CHINESE_16x16__

@@ -24,6 +24,7 @@ void startup()
 
     timer_init();
     OLED_init();
+    OLED_clear();
 
     // Init SLLB120200 pins
     PIN_input_PU(SW_1);
@@ -51,8 +52,8 @@ void main()
     __data uint16_t SW_interval  = 500;
 
     OLED_setFont(FONT_CHINESE_16x16);
-    // OLED_setCursor(1, 3);
-    OLED_setMemoryAddress(2, 42);
+    OLED_setCursor(1, 3);
+    // OLED_setMemoryAddress(2, 42);
     OLED_write(3);
     OLED_setFont(FONT_DOS_8x16);
     OLED_print("825");

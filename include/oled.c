@@ -28,8 +28,8 @@
 #define OLED_MEM_ADDR_MODE_PAGE 0x02  // Page addressing mode
 #define OLED_MEM_ADDR_MODE_H    0x00  // Horizontal addressing mode
 #define OLED_MEM_ADDR_MODE_V    0x01  // Vertical addressing mode
-#define OLED_COLUMNS            0x21  // set start and end column (following 2 bytes)
-#define OLED_PAGES              0x22  // set start and end page (following 2 bytes)
+#define OLED_COLUMN_ADDRESSES   0x21  // set start and end column (following 2 bytes)
+#define OLED_PAGE_ADDRESSES     0x22  // set start and end page (following 2 bytes)
 #define OLED_STARTLINE          0x40  // set display start line (0x40-0x7F = 0-63)
 #define OLED_CONTRAST           0x81  // Set display contrast (following a byte, 0-255) - (Reset 0x7F)
 #define OLED_CHARGE_PUMP        0x8D  // (following byte - 0x14:enable, 0x10: disable)
@@ -180,17 +180,17 @@ __code uint8_t OLED_FONT_CHINESE_16x16[] = {
 
 // OLED initialization sequence
 __code uint8_t OLED_INIT_CMD[] = {
-    OLED_MULTIPLEX,     0x3F,                     // set multiplex ratio
-    OLED_CHARGE_PUMP,   0x14,                     // set DC-DC enable
-    OLED_MEM_ADDR_MODE, OLED_MEM_ADDR_MODE_PAGE,  // set page addressing mode
-    OLED_COM_PINS,      0x12,                     // set com pins
-    OLED_CONTRAST,      0x3F,                     // set contrast 63 / 255
-    OLED_DISPLAY_ON                               // display on
+    OLED_MULTIPLEX,     0x3F,                  // set multiplex ratio
+    OLED_CHARGE_PUMP,   0x14,                  // set DC-DC enable
+    OLED_MEM_ADDR_MODE, OLED_MEM_ADDR_MODE_V,  // set page addressing mode
+    OLED_COM_PINS,      0x12,                  // set com pins
+    OLED_CONTRAST,      0x3F,                  // set contrast 63 / 255
+    OLED_DISPLAY_ON                            // display on
 };
 
-__data uint8_t _page;    // OLED memory pages, from 0 to 7.
-__data uint8_t _column;  // OLED memory columns, from 0 to 127.
-__data uint8_t _font;
+__data uint8_t _page   = 0;         // OLED memory pages, from 0 to 7.
+__data uint8_t _column = 0;         // OLED memory columns, from 0 to 127.
+__data uint8_t _font   = FONT_5x8;  // Default font
 
 // OLED init function
 void OLED_init(void)
@@ -198,44 +198,48 @@ void OLED_init(void)
     I2C_init();                // initialize I2C first
     I2C_start(OLED_ADDR);      // start transmission to OLED
     I2C_write(OLED_CMD_MODE);  // set command mode
-    for (uint8_t i = 0; i < sizeof(OLED_INIT_CMD); i++)
+    uint8_t size = sizeof(OLED_INIT_CMD);
+    for (uint8_t i = 0; i < size; i++)
     {
         I2C_write(OLED_INIT_CMD[i]);  // send the command bytes
     }
-    I2C_stop();    // stop transmission
-    OLED_clear();  // clear screen
+    I2C_stop();  // stop transmission
 }
 
-// Set memory address in page addressing mode
-void OLED_setMemoryAddress(uint8_t page, uint8_t column)
+// Set memory address range
+void OLED_setMemoryAddress(uint8_t start_page, uint8_t end_page, uint8_t start_column, uint8_t end_column)
 {
-    _page   = page % 8;
-    _column = column;
-    I2C_start(OLED_ADDR);                       // start transmission to OLED
-    I2C_write(OLED_CMD_MODE);                   // set command mode
-    I2C_write(OLED_PAGE | _page);               // set page
-    I2C_write(_column & 0x0F);                  // set lower column start address [0x00, 0x0F], x & 0x0F
-    I2C_write(0x10 + ((_column >> 4) & 0x0F));  // set upper column start address [0x10, 0x1F], (x >> 4) & 0x0F
-    I2C_stop();                                 // stop transmission
+    _page   = start_page % 8;
+    _column = start_column;
+    I2C_start(OLED_ADDR);              // start transmission to OLED
+    I2C_write(OLED_CMD_MODE);          // set command mode
+    I2C_write(OLED_PAGE_ADDRESSES);    // set page addresses
+    I2C_write(start_page);             // set start page
+    I2C_write(end_page);               // set end page
+    I2C_write(OLED_COLUMN_ADDRESSES);  // set page addresses
+    I2C_write(start_column);           // set start page
+    I2C_write(end_column);             // set end page
+    I2C_stop();                        // stop transmission
 }
 
-// Clear page in page addressing mode
-void OLED_clearPage(uint8_t page)
-{
-    OLED_setMemoryAddress(page, 0);  // set cursor to line start
-    I2C_start(OLED_ADDR);            // start transmission to OLED
-    I2C_write(OLED_DATA_MODE);       // set data mode
-    for (uint8_t col = 128; col; col--)
-        I2C_write(0x00);  // clear the line
-    I2C_stop();           // stop transmission
-}
-
-// Clear screen in page addressing mode
+// Clear screen
 void OLED_clear(void)
 {
-    for (uint8_t page = 0; page < 8; page++)
-        OLED_clearPage(page);
-    OLED_setMemoryAddress(0, 0);
+    OLED_setMemoryAddress(0, 7, 0, 127);
+
+    I2C_start(OLED_ADDR);       // start transmission to OLED
+    I2C_write(OLED_DATA_MODE);  // set data mode
+    for (uint8_t page = 8; page; page--)
+    {
+        for (uint8_t col = 128; col; col--)
+        {
+            I2C_write(0x00);
+        }
+    }
+    I2C_stop();  // stop transmission
+
+    _page   = 0;
+    _column = 0;
 }
 
 // Helper
@@ -247,22 +251,12 @@ void OLED_plotChar16(const uint8_t* data, uint8_t width)
     I2C_write(OLED_DATA_MODE);  // set data mode
     for (w = width; w; w--)
     {
-        I2C_write(*data++);
-    }
-    I2C_stop();  // stop transmission
-
-    OLED_setMemoryAddress(_page + 1, _column);
-
-    I2C_start(OLED_ADDR);       // start transmission to OLED
-    I2C_write(OLED_DATA_MODE);  // set data mode
-    for (w = width; w; w--)
-    {
-        I2C_write(*data++);
+        I2C_write(*data);
+        I2C_write(*(data++ + width));
     }
     I2C_stop();  // stop transmission
 
     _column += width;
-    OLED_setMemoryAddress(_page - 1, _column);
 }
 
 // Plot a single character
@@ -277,7 +271,8 @@ void OLED_plotChar(char c)
             return;
         }
         ptr = c - 32;
-        ptr += ptr << 2;            // -> ptr = (ch - 32) * 5;
+        ptr += ptr << 2;  // -> ptr = (ch - 32) * 5;
+        OLED_setMemoryAddress(_page, _page, _column, 127);
         I2C_start(OLED_ADDR);       // start transmission to OLED
         I2C_write(OLED_DATA_MODE);  // set data mode
         for (uint8_t i = 5; i; i--)
@@ -295,13 +290,15 @@ void OLED_plotChar(char c)
         {
             return;
         }
-        ptr = c - 32;
-        ptr <<= 4;  // -> ptr = (ch - 32) * 16;
+        ptr = c - 32;  // omit control characters
+        ptr <<= 4;     // ptr = (ch - 32) * 16;
+        OLED_setMemoryAddress(_page, _page + 1, _column, 127);
         OLED_plotChar16(&OLED_FONT_DOS_8x16[ptr], 8);
     }
     else if (_font == FONT_CHINESE_16x16)
     {
-        ptr = c << 5;  // -> ptr = ch * 32;
+        ptr = c << 5;  // ptr = ch * 32;
+        OLED_setMemoryAddress(_page, _page + 1, _column, 127);
         OLED_plotChar16(&OLED_FONT_CHINESE_16x16[ptr], 16);
     }
 }
@@ -309,19 +306,19 @@ void OLED_plotChar(char c)
 // OLED write a character or handle control characters
 void OLED_write(char c)
 {
-    c = c & 0x7F;  // Ignore MSB
+    // c = c & 0x7F;  // Ignore MSB
 
-    if (c == '\n')  // new line
-    {
-        OLED_setMemoryAddress(_page++, 0);
-    }
-    else
+    // if (c == '\n')  // new line
+    // {
+    //     OLED_setMemoryAddress(++_page, 0);
+    // }
+    // else
     {
         OLED_plotChar(c);
-        if (_column > 127)
-        {
-            OLED_setMemoryAddress(_page++, 0);
-        }
+        // if (_column > 127)
+        // {
+        //     OLED_setMemoryAddress(_page++, 0);
+        // }
     }
 }
 
@@ -332,22 +329,8 @@ void OLED_setFont(uint8_t font)
 
 void OLED_setCursor(uint8_t row, uint8_t col)
 {
-    if (_font == FONT_DOS_8x16)
-    {
-        _page   = row << 1;
-        _column = col << 3;
-    }
-    else if (_font == FONT_CHINESE_16x16)
-    {
-        _page   = row << 1;
-        _column = col << 4;
-    }
-    else
-    {
-        _page   = row;
-        _column = (col << 1) + (col << 2);
-    }
-    OLED_setMemoryAddress(_page, _column);
+    _page   = row;
+    _column = col << 3;
 }
 
 void OLED_print(const char* str)

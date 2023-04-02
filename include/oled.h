@@ -22,6 +22,7 @@ void OLED_init(void);
 void OLED_clear(void);
 void OLED_setFont(OLED_font* font);
 void OLED_setMemoryAddress(uint8_t start_page, uint8_t end_page, uint8_t start_column, uint8_t end_column);
-void OLED_setCursor(uint8_t row, uint8_t col);
+void OLED_setCursor(uint8_t page, uint8_t column);
 void OLED_write(char c);
 void OLED_print(const char* str);
+void OLED_paddingPrint(const char* str, uint8_t padding);

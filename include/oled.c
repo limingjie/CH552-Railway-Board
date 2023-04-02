@@ -80,7 +80,7 @@ void OLED_init(void)
 // Set memory address range
 void OLED_setMemoryAddress(uint8_t start_page, uint8_t end_page, uint8_t start_column, uint8_t end_column)
 {
-    _page   = start_page % 8;
+    _page   = start_page;
     _column = start_column;
     I2C_start(OLED_ADDR);              // start transmission to OLED
     I2C_write(OLED_CMD_MODE);          // set command mode
@@ -102,7 +102,7 @@ void OLED_clear(void)
     I2C_write(OLED_DATA_MODE);  // set data mode
     for (uint8_t page = 8; page; page--)
     {
-        for (uint8_t col = 128; col; col--)
+        for (uint8_t column = 128; column; column--)
         {
             I2C_write(0x00);
         }
@@ -118,29 +118,41 @@ void OLED_setFont(OLED_font* font)
     _font = font;
 }
 
-void OLED_setCursor(uint8_t row, uint8_t col)
+void OLED_setCursor(uint8_t page, uint8_t column)
 {
-    _page   = row;
-    _column = col * (_font->width + _font->spacing);
+    _page   = page;
+    _column = column;
 }
 
 // Helper
 void OLED_plotChar(char c)
 {
-    uint8_t i;
+    uint8_t i, j;
 
     __code uint8_t* data = &_font->data[(c - _font->first) * _font->width * _font->height];
 
-    for (i = _font->width * _font->height; i; i--)
+    for (i = _font->width; i; i--)
     {
-        I2C_write(*data++);
+        if (_column < 128)
+        {
+            for (j = _font->height; j; j--)
+            {
+                I2C_write(*data++);
+            }
+            _column++;
+        }
     }
-    for (i = _font->spacing * _font->height; i; i--)
+    for (i = _font->spacing; i; i--)
     {
-        I2C_write(0x00);
+        if (_column < 128)
+        {
+            for (j = _font->height; j; j--)
+            {
+                I2C_write(0x00);
+            }
+            _column++;
+        }
     }
-
-    _column += _font->width + _font->spacing;
 }
 
 // Print a single character
@@ -158,6 +170,29 @@ void OLED_print(const char* str)
     OLED_setMemoryAddress(_page, _page + _font->height - 1, _column, 127);
     I2C_start(OLED_ADDR);       // start transmission to OLED
     I2C_write(OLED_DATA_MODE);  // set data mode
+    while (*str)
+    {
+        OLED_plotChar(*str++);
+    }
+    I2C_stop();  // stop transmission
+}
+
+void OLED_paddingPrint(const char* str, uint8_t padding)
+{
+    OLED_setMemoryAddress(_page, _page + _font->height - 1, _column, 127);
+    I2C_start(OLED_ADDR);       // start transmission to OLED
+    I2C_write(OLED_DATA_MODE);  // set data mode
+    for (uint8_t i = padding; i; i--)
+    {
+        if (_column < 128)
+        {
+            for (uint8_t j = _font->height; j; j--)
+            {
+                I2C_write(0x00);
+            }
+            _column++;
+        }
+    }
     while (*str)
     {
         OLED_plotChar(*str++);

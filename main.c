@@ -5,6 +5,10 @@
 #include <system.h>  // mcu_config()
 #include <time.h>    // millis(), delay()
 
+#include <font_5x8.h>
+#include <font_dos_8x16.h>
+#include <font_chinese_16x16.h>
+
 #define SW_VALUE_MIN 0
 #define SW_VALUE_MAX 100
 
@@ -51,24 +55,12 @@ void main()
     __data uint8_t  slider_pos   = 0;
     __data uint16_t SW_interval  = 500;
 
-    OLED_setFont(FONT_CHINESE_16x16);
+    OLED_setFont(&OLED_FONT_CHINESE_16x16);
     OLED_setCursor(1, 3);
-    // OLED_setMemoryAddress(2, 42);
-    OLED_write(3);
-    OLED_setFont(FONT_DOS_8x16);
+    OLED_write(2);
+    OLED_setFont(&OLED_FONT_DOS_8x16);
     OLED_print("825");
-    // OLED_setFont(FONT_5x8);
-    // OLED_setCursor(0, 0);
-    // OLED_print("===SLLB120200 Test===");
-    // OLED_setCursor(2, 0);
-    // OLED_print("PIN  1 2 T 3 4 C");
-    // OLED_setCursor(3, 0);
-    // OLED_print("               G");
-    // OLED_setCursor(5, 0);
-    // OLED_print("Val =        SW = OFF");
-    // OLED_setCursor(6, 0);
-    // OLED_print("--------------------+");
-    OLED_setFont(FONT_5x8);
+    OLED_setFont(&OLED_FONT_5x8);
     OLED_setCursor(0, 1);
     OLED_print("Beijing->Qinhuangdao");
     OLED_setCursor(5, 4);
@@ -83,17 +75,6 @@ void main()
         b_SW_3 = PIN_read(SW_3);
         b_SW_4 = PIN_read(SW_4);
         b_SW_T = PIN_read(SW_T);
-
-        // OLED_setCursor(3, 5);
-        // OLED_write(b_SW_1 ? '1' : '0');
-        // OLED_setCursor(3, 7);
-        // OLED_write(b_SW_2 ? '1' : '0');
-        // OLED_setCursor(3, 9);
-        // OLED_write(b_SW_T ? '1' : '0');
-        // OLED_setCursor(3, 11);
-        // OLED_write(b_SW_3 ? '1' : '0');
-        // OLED_setCursor(3, 13);
-        // OLED_write(b_SW_4 ? '1' : '0');
 
         if (!b_SW_2)  // On Far-Left
         {
@@ -144,20 +125,11 @@ void main()
             SW_interval  = 500;
         }
 
-        // OLED_setCursor(5, 6);
-        // sprintf(buf, "%03d", SW_value);
-        // OLED_print(buf);
-        // OLED_setCursor(5, 18);
-        // OLED_print(b_SW_T ? "OFF" : "ON ");
         if (SW_value / 5 != slider_pos)
         {
-            // OLED_setCursor(6, 20 - slider_pos);
-            // OLED_write('-');
             OLED_setCursor(7, slider_pos);
             OLED_write('=');
             slider_pos = SW_value / 5;
-            // OLED_setCursor(6, 20 - slider_pos);
-            // OLED_write('+');
             OLED_setCursor(7, slider_pos);
             OLED_write('#');
         }

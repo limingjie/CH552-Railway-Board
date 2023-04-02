@@ -101,7 +101,7 @@ __code uint8_t _OLED_FONT_5x8[] = {
     0x08, 0x04, 0x08, 0x10, 0x08,  // '~' 94
 };
 
-OLED_font OLED_FONT_5x8 = {
+__code OLED_font OLED_FONT_5x8 = {
     (uint8_t *)_OLED_FONT_5x8,
     5,   // Font width in pixels
     1,   // Font height in OLED pages (8 pixels per page)

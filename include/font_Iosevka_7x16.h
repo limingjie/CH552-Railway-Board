@@ -101,7 +101,7 @@ __code uint8_t _OLED_FONT_IOSEVKA_7x16[] = {
     0x00, 0x08, 0x00, 0x0e, 0x00, 0x02, 0x00, 0x06, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x02,  // '~'
 };
 
-OLED_font OLED_FONT_IOSEVKA_7x16 = {
+__code OLED_font OLED_FONT_IOSEVKA_7x16 = {
     (uint8_t *)_OLED_FONT_IOSEVKA_7x16,
     7,   // Font width in pixels
     2,   // Font height in OLED pages (8 pixels per page)

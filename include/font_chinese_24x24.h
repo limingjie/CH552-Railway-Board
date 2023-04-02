@@ -1,6 +1,3 @@
-#ifndef __OLED_FONT_CHINESE_24x24__
-#define __OLED_FONT_CHINESE_24x24__
-
 #pragma once
 
 #include "font.h"
@@ -24,12 +21,10 @@ __code uint8_t _OLED_FONT_CHINESE_24x24[] = {
     0xf0, 0x99, 0xff, 0xf0, 0x19, 0xff, 0x00, 0x18, 0x03, 0x00, 0x18, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // '器'
 };
 
-OLED_font OLED_FONT_CHINESE_24x24 = {
+__code OLED_font OLED_FONT_CHINESE_24x24 = {
     (uint8_t *)_OLED_FONT_CHINESE_24x24,
     24,  // Font width in pixels
     3,   // Font height in OLED pages (8 pixels per page)
     0,   // Character spacing
     1,   // The code point of the first character
 };
-
-#endif  // __OLED_FONT_CHINESE_24x24__

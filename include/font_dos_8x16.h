@@ -107,5 +107,5 @@ OLED_font OLED_FONT_DOS_8x16 = {
     8,   // width
     16,  // height
     0,   // spacing
-    32,
+    32,  // First char
 };

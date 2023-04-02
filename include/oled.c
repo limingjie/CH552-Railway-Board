@@ -6,6 +6,7 @@
 //
 // References
 // - https://github.com/wagiminator/CH552-USB-OLED
+// - https://github.com/datacute/Tiny4kOLED
 //
 // Apr 2023 by Li Mingjie
 // - Email:  limingjie@outlook.com
@@ -112,35 +113,6 @@ void OLED_clear(void)
     _column = 0;
 }
 
-// Helper
-void OLED_plotChar(char c)
-{
-    uint8_t i;
-
-    __code uint8_t* data = &_font->data[(c - _font->first) * _font->width * (_font->height >> 3)];
-
-    I2C_start(OLED_ADDR);       // start transmission to OLED
-    I2C_write(OLED_DATA_MODE);  // set data mode
-    for (i = _font->width * (_font->height >> 3); i; i--)
-    {
-        I2C_write(*data++);
-    }
-    for (i = _font->spacing * (_font->height >> 3); i; i--)
-    {
-        I2C_write(0x00);
-    }
-    I2C_stop();  // stop transmission
-
-    _column += _font->width + _font->spacing;
-}
-
-// Plot a single character
-void OLED_write(char c)
-{
-    OLED_setMemoryAddress(_page, _page + (_font->height >> 3) - 1, _column, 127);
-    OLED_plotChar(c);
-}
-
 void OLED_setFont(OLED_font* font)
 {
     _font = font;
@@ -152,8 +124,43 @@ void OLED_setCursor(uint8_t row, uint8_t col)
     _column = col * (_font->width + _font->spacing);
 }
 
+// Helper
+void OLED_plotChar(char c)
+{
+    uint8_t i;
+
+    __code uint8_t* data = &_font->data[(c - _font->first) * _font->width * _font->height];
+
+    for (i = _font->width * _font->height; i; i--)
+    {
+        I2C_write(*data++);
+    }
+    for (i = _font->spacing * _font->height; i; i--)
+    {
+        I2C_write(0x00);
+    }
+
+    _column += _font->width + _font->spacing;
+}
+
+// Print a single character
+void OLED_write(char c)
+{
+    OLED_setMemoryAddress(_page, _page + _font->height - 1, _column, 127);
+    I2C_start(OLED_ADDR);       // start transmission to OLED
+    I2C_write(OLED_DATA_MODE);  // set data mode
+    OLED_plotChar(c);
+    I2C_stop();  // stop transmission
+}
+
 void OLED_print(const char* str)
 {
+    OLED_setMemoryAddress(_page, _page + _font->height - 1, _column, 127);
+    I2C_start(OLED_ADDR);       // start transmission to OLED
+    I2C_write(OLED_DATA_MODE);  // set data mode
     while (*str)
-        OLED_write(*str++);
+    {
+        OLED_plotChar(*str++);
+    }
+    I2C_stop();  // stop transmission
 }

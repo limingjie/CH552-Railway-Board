@@ -6,14 +6,12 @@
 //
 // References
 // - https://github.com/wagiminator/CH552-USB-OLED
+// - https://github.com/datacute/Tiny4kOLED
 //
 // Apr 2023 by Li Mingjie
 // - Email:  limingjie@outlook.com
 // - GitHub: https://github.com/limingjie/
 //
-
-#ifndef __OLED_H__
-#define __OLED_H__
 
 #pragma once
 #include <stdint.h>
@@ -27,5 +25,3 @@ void OLED_setMemoryAddress(uint8_t start_page, uint8_t end_page, uint8_t start_c
 void OLED_setCursor(uint8_t row, uint8_t col);
 void OLED_write(char c);
 void OLED_print(const char* str);
-
-#endif  // __OLED_H__

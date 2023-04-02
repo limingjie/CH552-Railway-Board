@@ -57,32 +57,23 @@ void main()
     __data uint8_t  slider_pos   = 0;
     __data uint16_t SW_interval  = 500;
 
-    OLED_setFont(&OLED_FONT_5x8);
-    OLED_setCursor(0, 0);
-    OLED_print("OLED 128x64 Fonts");
-
     OLED_setFont(&OLED_FONT_DOS_8x16);
-    OLED_setCursor(0, 13);
-    OLED_print("MCU");
+    OLED_setCursor(1, 8);
+    OLED_print("MCU Font");
 
     OLED_setFont(&OLED_FONT_CHINESE_16x16);
-    OLED_setCursor(2, 6);
-    OLED_print("\x01\x02");
-
-    OLED_setFont(&OLED_FONT_CHINESE_24x24);
     OLED_setCursor(1, 0);
     OLED_print("\x01\x02\x03\x04");
 
     OLED_setFont(&OLED_FONT_CHINESE_32x32);
-    OLED_setCursor(4, 0);
+    OLED_setCursor(3, 0);
     OLED_print("\x01\x02\x03\x04");
-    // OLED_setFont(&OLED_FONT_5x8);
-    // // OLED_setCursor(0, 1);
-    // // OLED_print("Beijing->Qinhuangdao");
-    // // OLED_setCursor(6, 4);
-    // // OLED_print("07:08 - 09:44");
-    // OLED_setCursor(7, 0);
-    // OLED_print("#====================");
+
+    OLED_setFont(&OLED_FONT_5x8);
+    OLED_setCursor(0, 0);
+    OLED_print("OLED 128x64 Font Demo");
+    OLED_setCursor(7, 0);
+    OLED_print("#====================");
 
     while (1)
     {

@@ -34,23 +34,30 @@ def char_to_bitmap(char, fontFile, fontSize, width, height):
     count = 0
     output_str = ""
     for byte in bytes:
-        hex_str = hex(byte)[2:].zfill(2)
         if count % 16 == 0:
             output_str += "\n    "
+        output_str +=f'0x{byte:02x}, '
         count += 1
-        output_str +="0x" + hex_str + ', '
-    output_str += "  // '" + char + "'"
+
+    # Append the character and hex value
+    output_str += "// '" + char + "' 0x" + (f'{ord(char):02x}' if ord(char) < 256 else f'{ord(char):04x}')
 
     return output_str
 
-output = "{"
-for char in " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_'abcdefghijklmnopqrstuvwxyz{|}~":
-    output += char_to_bitmap(char, "iosevka-term-regular.ttf", 8, 4, 8)
-output += "\n}"
+def main():
+    output = "{"
 
-# output = "{"
-# for char in "微处理器":
-#     output += char_to_bitmap(char, "sarasa-mono-sc-regular.ttf", 15, 16, 16)
-# output += "\n}"
+    # ASCII printable characters from space (0x20) to ~ (0x7E)
+    # for char in r""" !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_'abcdefghijklmnopqrstuvwxyz{|}~""":
+    #     output += char_to_bitmap(char, "iosevka-term-regular.ttf", 8, 4, 8)
 
-print(output)
+    # Other Unicode characters
+    for char in "微处理器": # "微處理器" / "マイクロプロセッサ"
+        output += char_to_bitmap(char, "sarasa-mono-sc-regular.ttf", 31, 32, 32)
+
+    output += "\n}"
+
+    print(output)
+
+if __name__ == "__main__":
+    main()

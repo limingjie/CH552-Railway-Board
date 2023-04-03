@@ -5,10 +5,11 @@
 #include <system.h>  // mcu_config()
 #include <time.h>    // millis(), delay()
 
+// Only keep the used fonts to reduce binary size
 #include <font_5x8.h>
 #include <font_dos_8x16.h>
 #include <font_chinese_16x16.h>
-#include <font_chinese_24x24.h>
+// #include <font_chinese_24x24.h>
 #include <font_chinese_32x32.h>
 
 __data uint32_t last_system_time = 0;

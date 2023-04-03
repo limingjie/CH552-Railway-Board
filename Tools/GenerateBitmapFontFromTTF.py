@@ -2,9 +2,22 @@ from PIL import Image, ImageFont, ImageDraw
 import numpy
 import sys
 
-def char_to_bitmap(char, fontFile, fontSize, width, height):
+
+# Convert character from TTF to bitmap
+# fontSize       - font height, 1 pixel
+# width & height - bitmap size
+def char_to_bitmap(char: str, fontFile: str, fontSize: int, bitmapSize: tuple[int, int]):
+    """Convert character from TTF to bitmap
+
+    Keyword arguments:
+    char       -- the character to convert
+    fontFile   -- the font file path
+    fontSize   -- the font size, usually 1 pixel smaller than height to leave character spacing and line spacing
+    bitmapSize -- A tuple of (width, height)
+    """
+
     # Create a new black and white image
-    img = Image.new('1', (width, height), color=1)
+    img = Image.new('1', bitmapSize, color=1)
 
     # Get a drawing context for the image
     draw = ImageDraw.Draw(img)
@@ -21,12 +34,12 @@ def char_to_bitmap(char, fontFile, fontSize, width, height):
 
     # Convert the bitmap line by line into a uint8_t array
     bytes = []
-    for x in range(width):
+    for x in range(bitmapSize[0]):
         bits = 0
-        for y in range(height):
+        for y in range(bitmapSize[1]):
             if arr[y][x] == 0:
                 bits |= (1 << y)
-        for i in range (height // 8):
+        for i in range (bitmapSize[1] // 8):
             bytes.append(bits & 0xFF)
             bits >>= 8
 
@@ -48,12 +61,12 @@ def main():
     output = "{"
 
     # ASCII printable characters from space (0x20) to ~ (0x7E)
-    # for char in r""" !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_'abcdefghijklmnopqrstuvwxyz{|}~""":
-    #     output += char_to_bitmap(char, "iosevka-term-regular.ttf", 8, 4, 8)
+    for char in r""" !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_'abcdefghijklmnopqrstuvwxyz{|}~""":
+        output += char_to_bitmap(char, "iosevka-term-regular.ttf", 8, (4, 8))
 
     # Other Unicode characters
-    for char in "微处理器": # "微處理器" / "マイクロプロセッサ"
-        output += char_to_bitmap(char, "sarasa-mono-sc-regular.ttf", 31, 32, 32)
+    # for char in r"""微处理器""": # "微處理器" / "マイクロプロセッサ"
+    #     output += char_to_bitmap(char, "sarasa-mono-sc-regular.ttf", 31, (32, 32))
 
     output += "\n}"
 

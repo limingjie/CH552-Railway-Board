@@ -21,7 +21,7 @@ def char_to_bitmap(char: str, font_file: str, font_size: int, bitmap_size: tuple
 
     # Draw the character in the center of the image
     font = ImageFont.truetype(font_file, font_size)
-    draw.text((0, 0), char, font=font, fill=0)
+    draw.text((0, -2), char, fill=0, font=font)
 
     # Convert the image to a numpy array
     arr = numpy.array(img)
@@ -42,10 +42,10 @@ def char_to_bitmap(char: str, font_file: str, font_size: int, bitmap_size: tuple
 
     # Convert the array to uint8_t array
     count = 0
-    output = ""
+    output = "\n"
     for byte in bytes:
-        if count % 16 == 0:
-            output += "\n    "
+        # if count % 16 == 0:
+        #     output += "\n    "
         output += f'{byte:#04x}, '
         count += 1
 
@@ -58,13 +58,13 @@ def char_to_bitmap(char: str, font_file: str, font_size: int, bitmap_size: tuple
 def main():
     output = "{"
 
-    # Printable ASCII characters from space (0x20) to ~ (0x7E)
-    for char in r""" !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_'abcdefghijklmnopqrstuvwxyz{|}~""":
-        output += char_to_bitmap(char, "iosevka-term-regular.ttf", 8, (4, 8))
+    # # Printable ASCII characters from space (0x20) to ~ (0x7E)
+    # for char in r""" !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_'abcdefghijklmnopqrstuvwxyz{|}~""":
+    #     output += char_to_bitmap(char, "iosevka-term-regular.ttf", 15, (8, 16))
 
     # Unicode characters
-    # for char in r"""微处理器""":
-    #     output += char_to_bitmap(char, "sarasa-mono-sc-regular.ttf", 31, (32, 32))
+    for char in r"""　⇐⇒北京上海秦皇岛大连广州""":
+        output += char_to_bitmap(char, "sarasa-mono-sc-regular.ttf", 15, (16, 16))
 
     output += "\n}"
 

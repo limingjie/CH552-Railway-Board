@@ -31,6 +31,12 @@
 #define OLED_MEM_ADDR_MODE_V    0x01  // Vertical addressing mode
 #define OLED_COLUMN_ADDRESSES   0x21  // set start and end column (following 2 bytes)
 #define OLED_PAGE_ADDRESSES     0x22  // set start and end page (following 2 bytes)
+#define OLED_RIGHT_SCROLL       0x26  // set continuous right scroll
+#define OLED_LEFT_SCROLL        0x27  // set continuous left scroll
+#define OLED_RIGHT_AND_V_SCROLL 0x29  // set continuous right scroll
+#define OLED_LEFT_AND_V_SCROLL  0x2A  // set continuous left scroll
+#define OLED_DEACTIVATE_SCROLL  0x2e  // deactivate scroll
+#define OLED_ACTIVATE_SCROLL    0x2f  // activate scroll
 #define OLED_STARTLINE          0x40  // set display start line (0x40-0x7F = 0-63)
 #define OLED_CONTRAST           0x81  // Set display contrast (following a byte, 0-255) - (Reset 0x7F)
 #define OLED_CHARGE_PUMP        0x8D  // (following byte - 0x14:enable, 0x10: disable)
@@ -51,17 +57,19 @@
 
 // OLED initialization sequence
 __code uint8_t OLED_INIT_CMD[] = {
-    OLED_MULTIPLEX,     0x3F,                  // set multiplex ratio
-    OLED_CHARGE_PUMP,   0x14,                  // set DC-DC enable
-    OLED_MEM_ADDR_MODE, OLED_MEM_ADDR_MODE_V,  // set page addressing mode
-    OLED_COM_PINS,      0x12,                  // set com pins
-    OLED_CONTRAST,      0x3F,                  // set contrast 63 / 255
-    OLED_DISPLAY_ON                            // display on
+    OLED_MULTIPLEX,        0x3F,                  // set multiplex ratio
+    OLED_CHARGE_PUMP,      0x14,                  // set DC-DC enable
+    OLED_MEM_ADDR_MODE,    OLED_MEM_ADDR_MODE_V,  // set page addressing mode
+    OLED_COM_PINS,         0x12,                  // set com pins
+    OLED_CONTRAST,         0x10,                  // set contrast 16 / 255
+    OLED_DISPLAY_ON,                              // display on
+    OLED_DEACTIVATE_SCROLL                        // Deactivate scroll
 };
 
 __data uint8_t _page   = 0;  // OLED memory pages, from 0 to 7.
 __data uint8_t _column = 0;  // OLED memory columns, from 0 to 127.
 OLED_font*     _font;        // Default font
+__bit          _color = 1;
 
 // OLED init function
 void OLED_init(void)
@@ -118,6 +126,11 @@ void OLED_setFont(OLED_font* font)
     _font = font;
 }
 
+void OLED_setColor(__bit color)
+{
+    _color = color;
+}
+
 void OLED_setCursor(uint8_t page, uint8_t column)
 {
     _page   = page;
@@ -127,31 +140,26 @@ void OLED_setCursor(uint8_t page, uint8_t column)
 // Helper
 void OLED_plotChar(char c)
 {
-    uint8_t i, j;
+    uint8_t i, j, byte;
 
-    __code uint8_t* data = &_font->data[(c - _font->first) * _font->width * _font->height];
+    const uint8_t* data = &_font->data[(uint16_t)(c - _font->first) * _font->width * _font->height];
 
     for (i = _font->width; i; i--)
     {
-        if (_column < 128)
+        for (j = _font->height; j; j--)
         {
-            for (j = _font->height; j; j--)
-            {
-                I2C_write(*data++);
-            }
-            _column++;
+            byte = *data++;
+            I2C_write(_color ? byte : ~byte);
         }
+        _column++;
     }
     for (i = _font->spacing; i; i--)
     {
-        if (_column < 128)
+        for (j = _font->height; j; j--)
         {
-            for (j = _font->height; j; j--)
-            {
-                I2C_write(0x00);
-            }
-            _column++;
+            I2C_write(_color ? 0x00 : 0xff);
         }
+        _column++;
     }
 }
 
@@ -177,25 +185,59 @@ void OLED_print(const char* str)
     I2C_stop();  // stop transmission
 }
 
-void OLED_paddingPrint(const char* str, uint8_t padding)
+void OLED_printRaw(uint8_t start_page, uint8_t end_page, uint8_t start_column, uint8_t end_column, uint8_t* pattern,
+                   uint8_t pattern_size)
 {
-    OLED_setMemoryAddress(_page, _page + _font->height - 1, _column, 127);
-    I2C_start(OLED_ADDR);       // start transmission to OLED
-    I2C_write(OLED_DATA_MODE);  // set data mode
-    for (uint8_t i = padding; i; i--)
+    for (uint8_t i = start_page; i <= end_page; ++i)
     {
-        if (_column < 128)
+        OLED_setMemoryAddress(i, i, start_column, end_column);
+        uint8_t k = 0;
+        for (uint8_t j = start_column; j <= end_column; ++j)
         {
-            for (uint8_t j = _font->height; j; j--)
-            {
-                I2C_write(0x00);
-            }
-            _column++;
+            I2C_start(OLED_ADDR);       // start transmission to OLED
+            I2C_write(OLED_DATA_MODE);  // set data mode
+            I2C_write(pattern[k++ % pattern_size]);
+            I2C_stop();  // stop transmission
         }
     }
-    while (*str)
-    {
-        OLED_plotChar(*str++);
-    }
-    I2C_stop();  // stop transmission
+}
+
+void OLED_rightScroll(uint8_t start_page, uint8_t end_page, uint8_t start_column, uint8_t end_column)
+{
+    I2C_start(OLED_ADDR);               // start transmission to OLED
+    I2C_write(OLED_CMD_MODE);           // set command mode
+    I2C_write(OLED_DEACTIVATE_SCROLL);  // deactivate scroll
+    I2C_write(OLED_RIGHT_SCROLL);       // set scroll right
+    I2C_write(0x00);                    // dummy byte
+    I2C_write(start_page);              // set start page
+    I2C_write(0x07);                    // set interval, 0x07 - every 2 frames
+    I2C_write(end_page);                // set end page
+    I2C_write(start_column);            // set start column
+    I2C_write(end_column);              // set end column
+    I2C_write(OLED_ACTIVATE_SCROLL);    // activate
+    I2C_stop();
+}
+
+void OLED_leftScroll(uint8_t start_page, uint8_t end_page, uint8_t start_column, uint8_t end_column)
+{
+    I2C_start(OLED_ADDR);               // start transmission to OLED
+    I2C_write(OLED_CMD_MODE);           // set command mode
+    I2C_write(OLED_DEACTIVATE_SCROLL);  // deactivate scroll
+    I2C_write(OLED_LEFT_SCROLL);        // set scroll left
+    I2C_write(0x00);                    // dummy byte
+    I2C_write(start_page);              // set start page
+    I2C_write(0x07);                    // set interval, 0x07 - every 2 frames
+    I2C_write(end_page);                // set end page
+    I2C_write(start_column);            // set start column
+    I2C_write(end_column);              // set end column
+    I2C_write(OLED_ACTIVATE_SCROLL);    // activate
+    I2C_stop();
+}
+
+void OLED_deactivateScroll()
+{
+    I2C_start(OLED_ADDR);               // start transmission to OLED
+    I2C_write(OLED_CMD_MODE);           // set command mode
+    I2C_write(OLED_DEACTIVATE_SCROLL);  // deactivate scrolls
+    I2C_stop();
 }
